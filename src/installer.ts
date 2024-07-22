@@ -31,6 +31,7 @@ export interface IGoVersionInfo {
 }
 
 export async function getGo(
+  goUrl: string,
   versionSpec: string,
   checkLatest: boolean,
   auth: string | undefined,
@@ -93,31 +94,57 @@ export async function getGo(
   let downloadPath = '';
   let info: IGoVersionInfo | null = null;
 
+  if (!downloadPath && goUrl) {
+    try {
+      downloadPath = await installGoVersion({
+        type: 'dist',
+        downloadUrl: goUrl,
+        resolvedVersion: 'custom',
+        fileName: goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1] || ''
+      }, auth, arch);
+    } catch (err) {
+      if (
+        err instanceof tc.HTTPError &&
+        (err.httpStatusCode === 403 || err.httpStatusCode === 429)
+      ) {
+        core.info(
+          `Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`
+        );
+      } else {
+        core.info((err as Error).message);
+      }
+      core.debug((err as Error).stack ?? '');
+      core.info('Falling back to download directly from Go');
+    }
+  }
+
   //
   // Try download from internal distribution (popular versions only)
   //
-  try {
-    info = await getInfoFromManifest(versionSpec, true, auth, arch, manifest);
-    if (info) {
-      downloadPath = await installGoVersion(info, auth, arch);
-    } else {
-      core.info(
-        'Not found in manifest.  Falling back to download directly from Go'
-      );
+  if (!downloadPath) {
+    try {
+      info = await getInfoFromManifest(versionSpec, true, auth, arch, manifest);
+      if (info) {
+        downloadPath = await installGoVersion(info, auth, arch);
+      } else {
+        core.info(
+          'Not found in manifest.  Falling back to download directly from Go'
+        );
+      }
+    } catch (err) {
+      if (
+        err instanceof tc.HTTPError &&
+        (err.httpStatusCode === 403 || err.httpStatusCode === 429)
+      ) {
+        core.info(
+          `Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`
+        );
+      } else {
+        core.info((err as Error).message);
+      }
+      core.debug((err as Error).stack ?? '');
+      core.info('Falling back to download directly from Go');
     }
-  } catch (err) {
-    if (
-      err instanceof tc.HTTPError &&
-      (err.httpStatusCode === 403 || err.httpStatusCode === 429)
-    ) {
-      core.info(
-        `Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`
-      );
-    } else {
-      core.info((err as Error).message);
-    }
-    core.debug((err as Error).stack ?? '');
-    core.info('Falling back to download directly from Go');
   }
 
   //

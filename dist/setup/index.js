@@ -88254,9 +88254,9 @@ const sys = __importStar(__nccwpck_require__(5632));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 const utils_1 = __nccwpck_require__(1314);
-function getGo(versionSpec_1, checkLatest_1, auth_1) {
-    return __awaiter(this, arguments, void 0, function* (versionSpec, checkLatest, auth, arch = os_1.default.arch()) {
-        var _a;
+function getGo(goUrl_1, versionSpec_1, checkLatest_1, auth_1) {
+    return __awaiter(this, arguments, void 0, function* (goUrl, versionSpec, checkLatest, auth, arch = os_1.default.arch()) {
+        var _a, _b, _c;
         let manifest;
         const osPlat = os_1.default.platform();
         if (versionSpec === utils_1.StableReleaseAlias.Stable ||
@@ -88293,28 +88293,51 @@ function getGo(versionSpec_1, checkLatest_1, auth_1) {
         core.info(`Attempting to download ${versionSpec}...`);
         let downloadPath = '';
         let info = null;
+        if (!downloadPath && goUrl) {
+            try {
+                downloadPath = yield installGoVersion({
+                    type: 'dist',
+                    downloadUrl: goUrl,
+                    resolvedVersion: 'custom',
+                    fileName: ((_a = goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)) === null || _a === void 0 ? void 0 : _a[1]) || ''
+                }, auth, arch);
+            }
+            catch (err) {
+                if (err instanceof tc.HTTPError &&
+                    (err.httpStatusCode === 403 || err.httpStatusCode === 429)) {
+                    core.info(`Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`);
+                }
+                else {
+                    core.info(err.message);
+                }
+                core.debug((_b = err.stack) !== null && _b !== void 0 ? _b : '');
+                core.info('Falling back to download directly from Go');
+            }
+        }
         //
         // Try download from internal distribution (popular versions only)
         //
-        try {
-            info = yield getInfoFromManifest(versionSpec, true, auth, arch, manifest);
-            if (info) {
-                downloadPath = yield installGoVersion(info, auth, arch);
+        if (!downloadPath) {
+            try {
+                info = yield getInfoFromManifest(versionSpec, true, auth, arch, manifest);
+                if (info) {
+                    downloadPath = yield installGoVersion(info, auth, arch);
+                }
+                else {
+                    core.info('Not found in manifest.  Falling back to download directly from Go');
+                }
             }
-            else {
-                core.info('Not found in manifest.  Falling back to download directly from Go');
+            catch (err) {
+                if (err instanceof tc.HTTPError &&
+                    (err.httpStatusCode === 403 || err.httpStatusCode === 429)) {
+                    core.info(`Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`);
+                }
+                else {
+                    core.info(err.message);
+                }
+                core.debug((_c = err.stack) !== null && _c !== void 0 ? _c : '');
+                core.info('Falling back to download directly from Go');
             }
-        }
-        catch (err) {
-            if (err instanceof tc.HTTPError &&
-                (err.httpStatusCode === 403 || err.httpStatusCode === 429)) {
-                core.info(`Received HTTP status code ${err.httpStatusCode}.  This usually indicates the rate limit has been exceeded`);
-            }
-            else {
-                core.info(err.message);
-            }
-            core.debug((_a = err.stack) !== null && _a !== void 0 ? _a : '');
-            core.info('Falling back to download directly from Go');
         }
         //
         // Download from storage.googleapis.com
@@ -88652,6 +88675,7 @@ function run() {
             // versionSpec is optional.  If supplied, install / use from the tool cache
             // If not supplied then problem matchers will still be setup.  Useful for self-hosted.
             //
+            const goUrl = core.getInput('go-url');
             const versionSpec = resolveVersionInput();
             const cache = core.getBooleanInput('cache');
             core.info(`Setup go version spec ${versionSpec}`);
@@ -88659,11 +88683,11 @@ function run() {
             if (!arch) {
                 arch = os_1.default.arch();
             }
-            if (versionSpec) {
+            if (versionSpec || goUrl) {
                 const token = core.getInput('token');
                 const auth = !token ? undefined : `token ${token}`;
                 const checkLatest = core.getBooleanInput('check-latest');
-                const installDir = yield installer.getGo(versionSpec, checkLatest, auth, arch);
+                const installDir = yield installer.getGo(goUrl, versionSpec, checkLatest, auth, arch);
                 const installDirVersion = path_1.default.basename(path_1.default.dirname(installDir));
                 core.addPath(path_1.default.join(installDir, 'bin'));
                 core.info('Added go to the path');

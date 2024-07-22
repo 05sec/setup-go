@@ -15,6 +15,7 @@ export async function run() {
     // versionSpec is optional.  If supplied, install / use from the tool cache
     // If not supplied then problem matchers will still be setup.  Useful for self-hosted.
     //
+    const goUrl = core.getInput('go-url');
     const versionSpec = resolveVersionInput();
 
     const cache = core.getBooleanInput('cache');
@@ -26,13 +27,14 @@ export async function run() {
       arch = os.arch();
     }
 
-    if (versionSpec) {
+    if (versionSpec || goUrl) {
       const token = core.getInput('token');
       const auth = !token ? undefined : `token ${token}`;
 
       const checkLatest = core.getBooleanInput('check-latest');
 
       const installDir = await installer.getGo(
+        goUrl,
         versionSpec,
         checkLatest,
         auth,
