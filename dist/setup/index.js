@@ -88298,8 +88298,11 @@ function getGo(goUrl_1, versionSpec_1, checkLatest_1, auth_1) {
         let info = null;
         if (!downloadPath && goUrl) {
             try {
+                const type = ['dist', 'manifest'].includes(core.getInput('go-url-type'))
+                    ? core.getInput('go-url-type')
+                    : 'dist';
                 downloadPath = yield installGoVersion({
-                    type: 'dist',
+                    type: type,
                     downloadUrl: goUrl,
                     resolvedVersion: versionSpec,
                     fileName: ((_a = goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)) === null || _a === void 0 ? void 0 : _a[1]) || ''

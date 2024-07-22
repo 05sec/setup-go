@@ -207,6 +207,7 @@ jobs:
           go-url: 'https://github.com/actions/go-versions/releases/download/1.22.5-9771837482/go-1.22.5-linux-x64.tar.gz'
           go-version: 1.22.5
           cache-sdk: false
+          go-url-type: 'manifest'
 
       - name: verify go
         run: __tests__/verify-go.sh "1.22.5"

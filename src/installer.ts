@@ -100,9 +100,14 @@ export async function getGo(
 
   if (!downloadPath && goUrl) {
     try {
+      const type: InstallationType = ['dist', 'manifest'].includes(
+        core.getInput('go-url-type')
+      )
+        ? (core.getInput('go-url-type') as InstallationType)
+        : 'dist';
       downloadPath = await installGoVersion(
         {
-          type: 'dist',
+          type: type,
           downloadUrl: goUrl,
           resolvedVersion: versionSpec,
           fileName: goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1] || ''
