@@ -88283,12 +88283,15 @@ function getGo(goUrl_1, versionSpec_1, checkLatest_1, auth_1) {
                 core.info(`Failed to resolve version ${versionSpec} from manifest`);
             }
         }
-        // check cache
-        const toolPath = tc.find('go', versionSpec, arch);
-        // If not found in cache, download
-        if (toolPath) {
-            core.info(`Found in cache @ ${toolPath}`);
-            return toolPath;
+        const cacheSDK = core.getBooleanInput('cache-sdk');
+        if (cacheSDK) {
+            // check cache
+            const toolPath = tc.find('go', versionSpec, arch);
+            // If not found in cache, download
+            if (toolPath) {
+                core.info(`Found in cache @ ${toolPath}`);
+                return toolPath;
+            }
         }
         core.info(`Attempting to download ${versionSpec}...`);
         let downloadPath = '';
