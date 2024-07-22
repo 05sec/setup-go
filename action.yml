@@ -19,6 +19,9 @@ inputs:
     default: true
   cache-dependency-path:
     description: 'Used to specify the path to a dependency file - go.sum'
+  cache-sdk:
+    description: "Used to specify whether caching SDK is needed."
+    default: true
   architecture:
     description: 'Target architecture for Go to use. Examples: x86, x64. Will use system architecture by default.'
 outputs:

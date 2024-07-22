@@ -83,25 +83,33 @@ export async function getGo(
     }
   }
 
-  // check cache
-  const toolPath = tc.find('go', versionSpec, arch);
-  // If not found in cache, download
-  if (toolPath) {
-    core.info(`Found in cache @ ${toolPath}`);
-    return toolPath;
+  const cacheSDK = core.getBooleanInput('cache-sdk');
+  if (cacheSDK) {
+    // check cache
+    const toolPath = tc.find('go', versionSpec, arch);
+    // If not found in cache, download
+    if (toolPath) {
+      core.info(`Found in cache @ ${toolPath}`);
+      return toolPath;
+    }
   }
+
   core.info(`Attempting to download ${versionSpec}...`);
   let downloadPath = '';
   let info: IGoVersionInfo | null = null;
 
   if (!downloadPath && goUrl) {
     try {
-      downloadPath = await installGoVersion({
-        type: 'dist',
-        downloadUrl: goUrl,
-        resolvedVersion: 'custom',
-        fileName: goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1] || ''
-      }, auth, arch);
+      downloadPath = await installGoVersion(
+        {
+          type: 'dist',
+          downloadUrl: goUrl,
+          resolvedVersion: 'custom',
+          fileName: goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1] || ''
+        },
+        auth,
+        arch
+      );
     } catch (err) {
       if (
         err instanceof tc.HTTPError &&
