@@ -104,7 +104,7 @@ export async function getGo(
         {
           type: 'dist',
           downloadUrl: goUrl,
-          resolvedVersion: 'custom',
+          resolvedVersion: versionSpec,
           fileName: goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)?.[1] || ''
         },
         auth,

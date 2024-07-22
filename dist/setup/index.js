@@ -88301,7 +88301,7 @@ function getGo(goUrl_1, versionSpec_1, checkLatest_1, auth_1) {
                 downloadPath = yield installGoVersion({
                     type: 'dist',
                     downloadUrl: goUrl,
-                    resolvedVersion: 'custom',
+                    resolvedVersion: versionSpec,
                     fileName: ((_a = goUrl.match(/\/([^\/?#]+)(?:[?#]|$)/i)) === null || _a === void 0 ? void 0 : _a[1]) || ''
                 }, auth, arch);
             }
